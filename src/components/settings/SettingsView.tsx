@@ -13,7 +13,8 @@ import {
   CheckCircle2,
   FileCheck,
   RefreshCw,
-  Archive
+  Archive,
+  Trash2
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import {
@@ -36,7 +37,7 @@ import type JSZip from 'jszip';
 export const SettingsView: React.FC = () => {
   const { settings, updateSettings, addToast, toggleTheme } = useApp();
 
-  const [activeSection, setActiveSection] = useState<'backup' | 'appearance' | 'scheduler' | 'academic' | 'storage' | 'general'>('backup');
+  const [activeSection, setActiveSection] = useState<'backup' | 'storage' | 'appearance' | 'scheduler' | 'academic' | 'general' | 'reset'>('backup');
 
   // Form states
   const [scholarName, setScholarName] = useState(settings.scholarName);
@@ -178,6 +179,91 @@ export const SettingsView: React.FC = () => {
     }
   };
 
+  // Dedicated module purge handlers
+  const handlePurgeLogs = async () => {
+    if (window.confirm('Are you sure you want to delete ALL academic logs permanently?')) {
+      await db.academicLogs.clear();
+      addToast('All academic logs cleared', 'info');
+    }
+  };
+
+  const handlePurgeFiles = async () => {
+    if (window.confirm('Are you sure you want to delete ALL stored files & documents from your vault?')) {
+      await db.files.clear();
+      getStorageEstimate().then(setStorageEstimate);
+      addToast('All files removed from vault', 'info');
+    }
+  };
+
+  const handlePurgeNotes = async () => {
+    if (window.confirm('Are you sure you want to delete ALL notebook notes and journals?')) {
+      await db.notes.clear();
+      addToast('All notes cleared', 'info');
+    }
+  };
+
+  const handlePurgeWork = async () => {
+    if (window.confirm('Are you sure you want to delete ALL assignments, lab records and tasks?')) {
+      await db.collegeWork.clear();
+      addToast('All college work items cleared', 'info');
+    }
+  };
+
+  const handlePurgeSchedules = async () => {
+    if (window.confirm('Are you sure you want to delete ALL calendar events and schedules?')) {
+      await db.schedules.clear();
+      addToast('All schedule entries cleared', 'info');
+    }
+  };
+
+  const handlePurgeSubjects = async () => {
+    if (window.confirm('Are you sure you want to delete ALL subjects, modules, and syllabi?')) {
+      await db.modules.clear();
+      await db.subjects.clear();
+      addToast('All subjects and modules cleared', 'info');
+    }
+  };
+
+  const handlePurgeStudySessions = async () => {
+    if (window.confirm('Delete all recorded study session logs?')) {
+      await db.studySessions.clear();
+      addToast('Study session records cleared', 'info');
+    }
+  };
+
+  const handleFactoryReset = async () => {
+    const confirmed = window.confirm(
+      'DANGER: Complete Factory Reset will erase EVERYTHING in your ARCHIVE (all subjects, tasks, files, notes, logs, events, history) and reset to an empty vault. Do you want to proceed?'
+    );
+    if (!confirmed) return;
+
+    await db.transaction('rw', [
+      db.subjects,
+      db.modules,
+      db.collegeWork,
+      db.schedules,
+      db.notes,
+      db.academicLogs,
+      db.files,
+      db.studySessions,
+      db.activityHistory
+    ], async () => {
+      await db.subjects.clear();
+      await db.modules.clear();
+      await db.collegeWork.clear();
+      await db.schedules.clear();
+      await db.notes.clear();
+      await db.academicLogs.clear();
+      await db.files.clear();
+      await db.studySessions.clear();
+      await db.activityHistory.clear();
+    });
+
+    localStorage.removeItem('archive_scratchpad');
+    getStorageEstimate().then(setStorageEstimate);
+    addToast('Vault completely reset to empty state', 'success', 5000);
+  };
+
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
       {/* Title */}
@@ -200,6 +286,7 @@ export const SettingsView: React.FC = () => {
             { id: 'scheduler', label: 'Scheduler Settings', icon: Calendar, desc: '12/24h & Week start' },
             { id: 'academic', label: 'Curriculum & Semester', icon: BookOpen, desc: 'Semester targets' },
             { id: 'general', label: 'General Identity', icon: User, desc: 'Scholar Name' },
+            { id: 'reset', label: 'Vault Purge & Reset', icon: Trash2, desc: 'Clear records & fresh start' },
           ].map(sec => {
             const Icon = sec.icon;
             const isActive = activeSection === sec.id;
@@ -640,6 +727,135 @@ export const SettingsView: React.FC = () => {
                 </button>
               </div>
             </form>
+          )}
+
+          {/* Section: Vault Purge & Reset */}
+          {activeSection === 'reset' && (
+            <div className="vintage-card rounded p-6 space-y-6">
+              <div>
+                <span className="text-xs font-mono uppercase tracking-wider text-[var(--accent-red)] font-bold">
+                  Data Removal & Vault Purge
+                </span>
+                <h3 className="font-serif font-bold text-xl text-[var(--text-primary)] mt-0.5">
+                  Delete Records & Reset Archive
+                </h3>
+                <p className="text-xs text-[var(--text-secondary)] font-body mt-1 max-w-xl">
+                  You have complete ownership of your local vault. Select any specific module below to purge its records immediately, or perform a complete factory reset to begin with a blank slate.
+                </p>
+              </div>
+
+              {/* Individual Module Purge Buttons */}
+              <div className="space-y-3 pt-2 border-t border-[var(--border-color)]">
+                <h4 className="font-serif font-bold text-sm text-[var(--text-primary)]">
+                  Individual Module Purge
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="p-3 rounded border border-[var(--border-color)] bg-[var(--bg-surface-elevated)] flex items-center justify-between">
+                    <div>
+                      <div className="text-xs font-serif font-bold text-[var(--text-primary)]">Academic Logs</div>
+                      <div className="text-[10px] font-mono text-[var(--text-secondary)]">Clear all laboratory & study logs</div>
+                    </div>
+                    <button
+                      onClick={handlePurgeLogs}
+                      className="px-2.5 py-1 rounded vintage-btn-secondary text-[var(--accent-red)] text-xs font-mono flex items-center gap-1 hover:border-[var(--accent-red)]"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                      <span>Delete All</span>
+                    </button>
+                  </div>
+
+                  <div className="p-3 rounded border border-[var(--border-color)] bg-[var(--bg-surface-elevated)] flex items-center justify-between">
+                    <div>
+                      <div className="text-xs font-serif font-bold text-[var(--text-primary)]">Digital Files & PDFs</div>
+                      <div className="text-[10px] font-mono text-[var(--text-secondary)]">Purge all binary blobs from vault</div>
+                    </div>
+                    <button
+                      onClick={handlePurgeFiles}
+                      className="px-2.5 py-1 rounded vintage-btn-secondary text-[var(--accent-red)] text-xs font-mono flex items-center gap-1 hover:border-[var(--accent-red)]"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                      <span>Delete All</span>
+                    </button>
+                  </div>
+
+                  <div className="p-3 rounded border border-[var(--border-color)] bg-[var(--bg-surface-elevated)] flex items-center justify-between">
+                    <div>
+                      <div className="text-xs font-serif font-bold text-[var(--text-primary)]">Notes & Journal Entries</div>
+                      <div className="text-[10px] font-mono text-[var(--text-secondary)]">Clear all notebook parchment pages</div>
+                    </div>
+                    <button
+                      onClick={handlePurgeNotes}
+                      className="px-2.5 py-1 rounded vintage-btn-secondary text-[var(--accent-red)] text-xs font-mono flex items-center gap-1 hover:border-[var(--accent-red)]"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                      <span>Delete All</span>
+                    </button>
+                  </div>
+
+                  <div className="p-3 rounded border border-[var(--border-color)] bg-[var(--bg-surface-elevated)] flex items-center justify-between">
+                    <div>
+                      <div className="text-xs font-serif font-bold text-[var(--text-primary)]">College Work & Tasks</div>
+                      <div className="text-[10px] font-mono text-[var(--text-secondary)]">Clear assignments, labs & projects</div>
+                    </div>
+                    <button
+                      onClick={handlePurgeWork}
+                      className="px-2.5 py-1 rounded vintage-btn-secondary text-[var(--accent-red)] text-xs font-mono flex items-center gap-1 hover:border-[var(--accent-red)]"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                      <span>Delete All</span>
+                    </button>
+                  </div>
+
+                  <div className="p-3 rounded border border-[var(--border-color)] bg-[var(--bg-surface-elevated)] flex items-center justify-between">
+                    <div>
+                      <div className="text-xs font-serif font-bold text-[var(--text-primary)]">Schedules & Timetable</div>
+                      <div className="text-[10px] font-mono text-[var(--text-secondary)]">Clear all calendar routines & events</div>
+                    </div>
+                    <button
+                      onClick={handlePurgeSchedules}
+                      className="px-2.5 py-1 rounded vintage-btn-secondary text-[var(--accent-red)] text-xs font-mono flex items-center gap-1 hover:border-[var(--accent-red)]"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                      <span>Delete All</span>
+                    </button>
+                  </div>
+
+                  <div className="p-3 rounded border border-[var(--border-color)] bg-[var(--bg-surface-elevated)] flex items-center justify-between">
+                    <div>
+                      <div className="text-xs font-serif font-bold text-[var(--text-primary)]">Subjects & Syllabi</div>
+                      <div className="text-[10px] font-mono text-[var(--text-secondary)]">Clear all registered course subjects</div>
+                    </div>
+                    <button
+                      onClick={handlePurgeSubjects}
+                      className="px-2.5 py-1 rounded vintage-btn-secondary text-[var(--accent-red)] text-xs font-mono flex items-center gap-1 hover:border-[var(--accent-red)]"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                      <span>Delete All</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Complete Factory Reset */}
+              <div className="p-4 rounded border-2 border-[var(--accent-red)]/50 bg-[var(--accent-red)]/5 space-y-3">
+                <div className="flex items-center gap-2 text-[var(--accent-red)] font-serif font-bold text-sm">
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                  <span>Factory Reset Vault (Clean Slate)</span>
+                </div>
+                <p className="text-xs text-[var(--text-secondary)] font-body">
+                  Permanently empties your local IndexedDB database across all tables. All demo seed data and existing records will be deleted, leaving an empty, pristine personal archive for your college career.
+                </p>
+                <div className="pt-2 flex justify-end">
+                  <button
+                    onClick={handleFactoryReset}
+                    className="px-4 py-2 rounded bg-[var(--accent-red)] text-white hover:opacity-90 font-mono text-xs font-bold flex items-center gap-2"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span>Wipe Entire Vault to Empty State</span>
+                  </button>
+                </div>
+              </div>
+            </div>
           )}
         </div>
       </div>

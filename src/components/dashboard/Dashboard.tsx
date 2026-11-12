@@ -12,7 +12,8 @@ import {
   Sliders,
   ChevronDown,
   ChevronUp,
-  GraduationCap
+  GraduationCap,
+  Trash2
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -159,6 +160,60 @@ export const Dashboard: React.FC = () => {
     }
   };
 
+  // Immediate entity deletion handlers
+  const handleDeleteSchedule = async (id: string, title: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (window.confirm(`Delete calendar event "${title}"?`)) {
+      await db.schedules.delete(id);
+      await logActivity('deleted', 'event', title, id);
+      addToast('Event deleted', 'info');
+    }
+  };
+
+  const handleDeleteWork = async (id: string, title: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (window.confirm(`Delete task "${title}"?`)) {
+      await db.collegeWork.delete(id);
+      await logActivity('deleted', 'work', title, id);
+      addToast('Task deleted', 'info');
+    }
+  };
+
+  const handleDeleteLog = async (id: string, title: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (window.confirm(`Delete academic log "${title}"?`)) {
+      await db.academicLogs.delete(id);
+      await logActivity('deleted', 'log', title, id);
+      addToast('Log deleted', 'info');
+    }
+  };
+
+  const handleDeleteFile = async (id: string, name: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (window.confirm(`Delete file "${name}" from vault?`)) {
+      await db.files.delete(id);
+      await logActivity('deleted', 'file', name, id);
+      addToast('File deleted', 'info');
+    }
+  };
+
+  const handleDeleteNote = async (id: string, title: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (window.confirm(`Delete note "${title}"?`)) {
+      await db.notes.delete(id);
+      await logActivity('deleted', 'note', title, id);
+      addToast('Note deleted', 'info');
+    }
+  };
+
+  const handleClearScratchpad = () => {
+    if (window.confirm('Clear all scratchpad text?')) {
+      setScratchpadText('');
+      localStorage.removeItem('archive_scratchpad');
+      addToast('Scratchpad cleared', 'info');
+    }
+  };
+
   // Calculate subject progress from actual topics
   const getSubjectProgress = (subjectId: string) => {
     const subModules = modules.filter(m => m.subjectId === subjectId);
@@ -258,6 +313,13 @@ export const Dashboard: React.FC = () => {
                               )}
                             </div>
                           </div>
+                          <button
+                            onClick={(e) => handleDeleteSchedule(event.id, event.title, e)}
+                            className="p-1 text-[var(--text-secondary)] hover:text-[var(--accent-red)] rounded transition-colors shrink-0"
+                            title="Delete Schedule Event"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       );
                     })}
@@ -360,6 +422,13 @@ export const Dashboard: React.FC = () => {
                               </span>
                             </div>
                           </div>
+                          <button
+                            onClick={(e) => handleDeleteWork(item.id, item.title, e)}
+                            className="p-1 text-[var(--text-secondary)] hover:text-[var(--accent-red)] rounded transition-colors shrink-0"
+                            title="Delete Task"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       );
                     })}
@@ -479,7 +548,14 @@ export const Dashboard: React.FC = () => {
                     className="w-full p-2.5 text-xs rounded vintage-input font-body notebook-ruled"
                   />
                   {scratchpadText.trim() && (
-                    <div className="flex justify-end gap-2 mt-1.5">
+                    <div className="flex items-center justify-between gap-2 mt-1.5">
+                      <button
+                        onClick={handleClearScratchpad}
+                        className="text-[11px] font-mono text-[var(--accent-red)] hover:underline inline-flex items-center gap-1"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                        <span>Clear Scratchpad</span>
+                      </button>
                       <button
                         onClick={handleConvertScratchpadToNote}
                         className="text-[11px] font-mono text-[var(--accent)] hover:underline inline-flex items-center gap-1"
@@ -498,21 +574,32 @@ export const Dashboard: React.FC = () => {
                     </span>
                     <div className="space-y-1">
                       {recentNotes.map(n => (
-                        <button
+                        <div
                           key={n.id}
-                          onClick={() => {
-                            setSelectedNoteId(n.id);
-                            setActiveTab('notes');
-                          }}
-                          className="w-full text-left p-1.5 rounded hover:bg-[var(--bg-inset)]/60 text-xs flex items-center justify-between group transition-colors"
+                          className="w-full p-1.5 rounded hover:bg-[var(--bg-inset)]/60 text-xs flex items-center justify-between group transition-colors"
                         >
-                          <span className="font-serif font-bold text-[var(--text-primary)] truncate">
+                          <button
+                            onClick={() => {
+                              setSelectedNoteId(n.id);
+                              setActiveTab('notes');
+                            }}
+                            className="font-serif font-bold text-[var(--text-primary)] truncate text-left flex-1 hover:text-[var(--accent)]"
+                          >
                             {n.title}
-                          </span>
-                          <span className="text-[10px] font-mono text-[var(--text-secondary)] group-hover:text-[var(--accent)]">
-                            {new Date(n.updatedAt).toLocaleDateString()}
-                          </span>
-                        </button>
+                          </button>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-mono text-[var(--text-secondary)]">
+                              {new Date(n.updatedAt).toLocaleDateString()}
+                            </span>
+                            <button
+                              onClick={(e) => handleDeleteNote(n.id, n.title, e)}
+                              className="p-1 text-[var(--text-secondary)] hover:text-[var(--accent-red)] rounded"
+                              title="Delete Note"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </div>
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -566,20 +653,31 @@ export const Dashboard: React.FC = () => {
                     {recentLogs.map(l => (
                       <div
                         key={l.id}
-                        onClick={() => setActiveTab('logbook')}
-                        className="p-2 rounded border border-[var(--border-color)] bg-[var(--bg-surface-elevated)] hover:border-[var(--text-primary)] cursor-pointer transition-all"
+                        className="p-2 rounded border border-[var(--border-color)] bg-[var(--bg-surface-elevated)] hover:border-[var(--text-primary)] transition-all flex items-center justify-between gap-3"
                       >
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="font-serif font-bold text-[var(--text-primary)] truncate">
-                            Log #{String(l.logNumber).padStart(3, '0')}: {l.title}
-                          </span>
-                          <span className="text-[10px] font-mono text-[var(--text-secondary)] shrink-0">
-                            {l.date}
-                          </span>
+                        <div
+                          onClick={() => setActiveTab('logbook')}
+                          className="flex-1 min-w-0 cursor-pointer"
+                        >
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="font-serif font-bold text-[var(--text-primary)] truncate hover:text-[var(--accent)]">
+                              Log #{String(l.logNumber).padStart(3, '0')}: {l.title}
+                            </span>
+                            <span className="text-[10px] font-mono text-[var(--text-secondary)] shrink-0">
+                              {l.date}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-[var(--text-secondary)] line-clamp-1 mt-0.5 font-body">
+                            {l.description}
+                          </p>
                         </div>
-                        <p className="text-[11px] text-[var(--text-secondary)] line-clamp-1 mt-0.5 font-body">
-                          {l.description}
-                        </p>
+                        <button
+                          onClick={(e) => handleDeleteLog(l.id, l.title, e)}
+                          className="p-1 text-[var(--text-secondary)] hover:text-[var(--accent-red)] rounded shrink-0"
+                          title="Delete Log"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
                       </div>
                     ))}
                   </div>
@@ -633,20 +731,31 @@ export const Dashboard: React.FC = () => {
                     {recentFiles.map(f => (
                       <div
                         key={f.id}
-                        onClick={() => setActiveTab('files')}
-                        className="p-2 rounded border border-[var(--border-color)] bg-[var(--bg-surface-elevated)] hover:border-[var(--text-primary)] cursor-pointer transition-all flex items-center gap-2"
+                        className="p-2 rounded border border-[var(--border-color)] bg-[var(--bg-surface-elevated)] hover:border-[var(--text-primary)] transition-all flex items-center justify-between gap-2"
                       >
-                        <div className="w-7 h-7 rounded bg-[var(--bg-inset)] flex items-center justify-center font-mono text-[10px] font-bold uppercase text-[var(--accent)] shrink-0">
-                          {f.fileType.substring(0, 3)}
-                        </div>
-                        <div className="truncate flex-1">
-                          <div className="text-xs font-mono font-medium text-[var(--text-primary)] truncate">
-                            {f.displayName}
+                        <div
+                          onClick={() => setActiveTab('files')}
+                          className="flex items-center gap-2 flex-1 min-w-0 cursor-pointer"
+                        >
+                          <div className="w-7 h-7 rounded bg-[var(--bg-inset)] flex items-center justify-center font-mono text-[10px] font-bold uppercase text-[var(--accent)] shrink-0">
+                            {f.fileType.substring(0, 3)}
                           </div>
-                          <div className="text-[10px] text-[var(--text-secondary)] capitalize">
-                            {f.category}
+                          <div className="truncate flex-1">
+                            <div className="text-xs font-mono font-medium text-[var(--text-primary)] truncate hover:text-[var(--accent)]">
+                              {f.displayName}
+                            </div>
+                            <div className="text-[10px] text-[var(--text-secondary)] capitalize">
+                              {f.category}
+                            </div>
                           </div>
                         </div>
+                        <button
+                          onClick={(e) => handleDeleteFile(f.id, f.displayName, e)}
+                          className="p-1 text-[var(--text-secondary)] hover:text-[var(--accent-red)] rounded shrink-0"
+                          title="Delete File"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
                       </div>
                     ))}
                   </div>
@@ -683,14 +792,23 @@ export const Dashboard: React.FC = () => {
                 ) : (
                   <div className="space-y-2">
                     {upcomingExams.map(ex => (
-                      <div key={ex.id} className="p-2.5 rounded border border-[var(--accent-red)]/40 bg-[var(--accent-red)]/5 flex items-center justify-between">
+                      <div key={ex.id} className="p-2.5 rounded border border-[var(--accent-red)]/40 bg-[var(--accent-red)]/5 flex items-center justify-between gap-2">
                         <div>
                           <div className="text-xs font-serif font-bold text-[var(--text-primary)]">{ex.title}</div>
                           <div className="text-[11px] text-[var(--text-secondary)]">Date: {ex.dueDate}</div>
                         </div>
-                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[var(--accent-red)] text-white font-bold">
-                          EXAM
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[var(--accent-red)] text-white font-bold">
+                            EXAM
+                          </span>
+                          <button
+                            onClick={(e) => handleDeleteWork(ex.id, ex.title, e)}
+                            className="p-1 text-[var(--text-secondary)] hover:text-[var(--accent-red)] rounded"
+                            title="Delete Exam"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>

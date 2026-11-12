@@ -202,17 +202,36 @@ export const SubjectWorkspace: React.FC<SubjectWorkspaceProps> = ({ subjectId, o
     addToast('Reference link saved', 'success');
   };
 
+  const handleDeleteSubject = async () => {
+    if (window.confirm(`Permanently delete subject "${subject.name}" and all its course modules?`)) {
+      await db.modules.where('subjectId').equals(subject.id).delete();
+      await db.subjects.delete(subject.id);
+      addToast('Subject and modules removed', 'info');
+      onBack();
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Workspace Header Bar */}
       <div className="vintage-card rounded p-4 sm:p-6 border-l-4" style={{ borderLeftColor: subject.color || '#B66A3C' }}>
-        <button
-          onClick={onBack}
-          className="inline-flex items-center gap-1.5 text-xs font-mono text-[var(--text-secondary)] hover:text-[var(--text-primary)] mb-3"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Return to Subjects Overview</span>
-        </button>
+        <div className="flex items-center justify-between mb-3">
+          <button
+            onClick={onBack}
+            className="inline-flex items-center gap-1.5 text-xs font-mono text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Return to Subjects Overview</span>
+          </button>
+          <button
+            onClick={handleDeleteSubject}
+            className="inline-flex items-center gap-1 text-xs font-mono text-[var(--accent-red)] hover:underline p-1"
+            title="Delete this subject"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            <span>Delete Subject</span>
+          </button>
+        </div>
 
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>

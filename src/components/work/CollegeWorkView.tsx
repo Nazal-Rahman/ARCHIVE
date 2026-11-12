@@ -342,17 +342,30 @@ export const CollegeWorkView: React.FC = () => {
 
                       <div className="flex items-center justify-between pt-1 border-t border-[var(--border-color)] text-[10px] font-mono text-[var(--text-secondary)]">
                         <span className="capitalize">{item.category.replace('_', ' ')}</span>
-                        <select
-                          value={item.status}
-                          onClick={(e) => e.stopPropagation()}
-                          onChange={(e) => handleStatusChange(item, e.target.value as WorkStatus)}
-                          className="bg-transparent border border-[var(--border-color)] rounded text-[9px] p-0.5"
-                        >
-                          <option value="not_started">Start</option>
-                          <option value="in_progress">In Prog</option>
-                          <option value="completed">Done</option>
-                          <option value="submitted">Submitted</option>
-                        </select>
+                        <div className="flex items-center gap-1">
+                          <select
+                            value={item.status}
+                            onClick={(e) => e.stopPropagation()}
+                            onChange={(e) => handleStatusChange(item, e.target.value as WorkStatus)}
+                            className="bg-transparent border border-[var(--border-color)] rounded text-[9px] p-0.5"
+                          >
+                            <option value="not_started">Start</option>
+                            <option value="in_progress">In Prog</option>
+                            <option value="completed">Done</option>
+                            <option value="submitted">Submitted</option>
+                          </select>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDelete(item.id, item.title);
+                            }}
+                            className="p-1 text-[var(--text-secondary)] hover:text-[var(--accent-red)] rounded"
+                            title="Delete Task"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   );
@@ -648,13 +661,30 @@ export const CollegeWorkView: React.FC = () => {
                 />
               </div>
 
-              <div className="pt-2 flex justify-end gap-2 border-t border-[var(--border-color)]">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="px-3 py-1.5 rounded vintage-btn-secondary">
-                  Cancel
-                </button>
-                <button type="submit" className="px-4 py-1.5 rounded vintage-btn-primary">
-                  Save Work
-                </button>
+              <div className="pt-2 flex items-center justify-between gap-2 border-t border-[var(--border-color)]">
+                {editingItem?.id ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (editingItem?.id) {
+                        handleDelete(editingItem.id, editingItem.title || 'Work Item');
+                        setIsModalOpen(false);
+                      }
+                    }}
+                    className="px-3 py-1.5 rounded vintage-btn-secondary text-[var(--accent-red)] flex items-center gap-1.5 text-xs font-mono"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Delete Work Item</span>
+                  </button>
+                ) : <div />}
+                <div className="flex items-center gap-2">
+                  <button type="button" onClick={() => setIsModalOpen(false)} className="px-3 py-1.5 rounded vintage-btn-secondary">
+                    Cancel
+                  </button>
+                  <button type="submit" className="px-4 py-1.5 rounded vintage-btn-primary">
+                    Save Work
+                  </button>
+                </div>
               </div>
             </form>
           </div>

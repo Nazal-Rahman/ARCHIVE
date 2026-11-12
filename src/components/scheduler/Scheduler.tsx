@@ -636,13 +636,30 @@ export const Scheduler: React.FC = () => {
                 />
               </div>
 
-              <div className="pt-2 flex justify-end gap-2 border-t border-[var(--border-color)]">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="px-3 py-1.5 rounded vintage-btn-secondary">
-                  Cancel
-                </button>
-                <button type="submit" className="px-4 py-1.5 rounded vintage-btn-primary">
-                  Save Event
-                </button>
+              <div className="pt-2 flex items-center justify-between gap-2 border-t border-[var(--border-color)]">
+                {editingEvent?.id ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (editingEvent?.id) {
+                        handleDeleteEvent(editingEvent.id, editingEvent.title || 'Event');
+                        setIsModalOpen(false);
+                      }
+                    }}
+                    className="px-3 py-1.5 rounded vintage-btn-secondary text-[var(--accent-red)] flex items-center gap-1.5 text-xs font-mono"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Delete Event</span>
+                  </button>
+                ) : <div />}
+                <div className="flex items-center gap-2">
+                  <button type="button" onClick={() => setIsModalOpen(false)} className="px-3 py-1.5 rounded vintage-btn-secondary">
+                    Cancel
+                  </button>
+                  <button type="submit" className="px-4 py-1.5 rounded vintage-btn-primary">
+                    Save Event
+                  </button>
+                </div>
               </div>
             </form>
           </div>
