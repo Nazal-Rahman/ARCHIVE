@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <rect width="64" height="64" rx="12" fill="#382A20" />
+  <rect x="3" y="3" width="58" height="58" rx="9" stroke="#B7A487" stroke-width="1.5" stroke-dasharray="2 2" />
+  <circle cx="32" cy="32" r="22" stroke="#B66A3C" stroke-width="1.5" />
+  <!-- Book / Archive Quill symbol -->
+  <path d="M20 44V22C20 20 22 18 24 18H32V42H23C21.5 42 20 42.5 20 44Z" fill="#F4EBDD" stroke="#D8C8A9" stroke-width="1.5" />
+  <path d="M44 44V22C44 20 42 18 40 18H32V42H41C42.5 42 44 42.5 44 44Z" fill="#E9DFC9" stroke="#D8C8A9" stroke-width="1.5" />
+  <line x1="32" y1="18" x2="32" y2="42" stroke="#382A20" stroke-width="2" />
+  <circle cx="32" cy="24" r="1.5" fill="#B66A3C" />
+  <path d="M24 26H28M24 30H28M24 34H28M36 26H40M36 30H40M36 34H40" stroke="#776653" stroke-width="1" stroke-linecap="round" />
+</svg>
